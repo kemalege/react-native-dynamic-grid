@@ -1,9 +1,30 @@
 /* eslint-disable */
 
 import { FlatList, StyleSheet, View , Text, ScrollView, ActivityIndicator, Pressable} from 'react-native';
-import {useState, useRef, useEffect, useMemo, useCallback} from 'react';
+import {useState, useRef, useEffect, useMemo, useCallback, useReducer} from 'react';
 import { fetchData } from './fetchDataQuery';
 import PaginationPanel from './ui/PaginationPanel';
+
+const ACTION = {
+    SELECT_ROW: 'selectRow',
+}
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case ACTION.SELECT_ROW:
+      return { ...state, selectedRow: action.payload };
+    default:
+      throw new Error();
+  }
+}
+
+function formatCurrencyTL(value) {
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
+}
+
+function styledNumericRow(isNumeric) {
+  return isNumeric ? {textAlign: 'right'} : {textAlign: 'center'}
+}
 
 const TableOne = () => {
 
@@ -11,7 +32,8 @@ const TableOne = () => {
     const userToken = process.env.USER_TOKEN;
     const url = process.env.API_URL;
   
-
+    const [state, dispatch] = useReducer(reducer, { selectedRow: null})
+    
     const refFlatList1 = useRef(null);
     const refFlatList2 = useRef(null);
     const [scrollingRightSideAmount, setScrollingRightSideAmount] = useState(0);
@@ -39,7 +61,7 @@ const TableOne = () => {
      }
 
      const handleRowPress = useCallback((index) => {
-      setSelectedRow(index);
+      dispatch({ type: ACTION.SELECT_ROW, payload: index })
     }, []);
      
     const onPageEnd = (direction) => {
@@ -60,7 +82,7 @@ const TableOne = () => {
     //   setRowsPerPages
     // };
 
-    const [rowData, setRowData] = useState([])
+    const [rowData, setRowData] = useState(null)
 
     const [columns, setColumns] = useState([]);
     const [pinnedColumns, setPinnedColumns] = useState([
@@ -75,18 +97,23 @@ const TableOne = () => {
         const columns = Object.keys(obj).map((name, index) => ({
           key: index + 1,
           name: name,
-          isNumeric: isNumber(name)
+          isNumeric: false
         }));
         return columns;
       }
 
-      function createRowsFromObject(obj) {
-        const columns = Object.keys(obj).map((field, index) => ({
-          key: index + 1,
-          field: field,
-          isNumeric: isNumber(name)
-        }));
-        return columns;
+      function createRowsFromObject(objArray) {
+        return objArray.map((obj, index) => {
+          const newObj = {};
+          Object.keys(obj).forEach((key) => {
+            newObj[key] = {
+              key: index + 1,
+              value: obj[key],
+              isNumeric: isNumber(obj[key])
+            };
+          });
+          return newObj;
+        });
       }
 
       const createPostFormData = useCallback(( currentPage, PageSize) => {
@@ -103,13 +130,13 @@ const TableOne = () => {
           setLoading(true)
           const params = createPostFormData(currentPage, PageSize)
           const data = await fetchData(url, params);
-          setRowData(data[0])
+          // setRowData(data[0])
           setRecordCount(data[1][0].RecordCount)
           setPageCount(data[1][0].PageCount)
           const columns = createHeadersFromObject(data[0][0]);
-          // console.log(columns)
+          const rows = createRowsFromObject(data[0]);
           setColumns(columns)
-          // console.log('Veri alındı:', data[0]);
+          setRowData(rows)
     
         } catch (error) {
           console.error('Hata:', error);
@@ -132,20 +159,24 @@ const TableOne = () => {
     }, [currentPage, pageSize]);
 
     const renderItem = ({ item, index }) => {
+        // console.log(item)
         return (
             <View style={{ flexDirection: 'row'}}>
               <Pressable
                 onPress={() => handleRowPress(index)}
                 style={({ pressed }) => [
                   styles.pressableRow,
-                  { backgroundColor: pressed ? '#F5F5F5' : (index === selectedRow ? '#E3EEFA' : 'white') },
+                  { backgroundColor: pressed ? '#F5F5F5' : (index === state.selectedRow ? '#E3EEFA' : 'white') },
                 ]}>
-                {columns.map((col, index) => {      
-                    return <View style={styles.rowCell} key={col.key}>
-                        <Text style={[styles.rowText, isNumber(item[col.name]) ? {textAlign: 'right'} : {textAlign: 'center'}]}>
-                            {item[col.name]}
+                {columns.map((col, index) => {
+                  const value = item[col.name].value  
+                  const isNumeric = item[col.name].isNumeric  
+                    return (
+                      <View style={styles.rowCell} key={col.key}>
+                        <Text style={[styles.rowText, styledNumericRow(isNumeric)]}>
+                            {isNumeric ?  formatCurrencyTL(value) : value }
                         </Text>
-                    </View>
+                    </View>)
                 })}
                 </Pressable>
             </View>
@@ -293,6 +324,6 @@ const styles = StyleSheet.create({
     },
     selectedRowStyle: {
       backgroundColor: '#E3EEFA'
-    }
+    },
 });
   
