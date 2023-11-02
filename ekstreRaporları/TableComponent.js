@@ -41,6 +41,57 @@ const TableComponent = () => {
     },
   ]);
 
+  const DATA = [
+    {
+      title: "CariKod",
+      data: "120 34 359"
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIl",
+      data: "ÝSTANBUL",
+    },
+    {
+      title: "PlasiyerKodu",
+      data: "2022-01-01T00:00:00",
+    },
+    {
+      title: "Tarih",
+      data: "null",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+    {
+      title: "CariIsim",
+      data: "MUSTERI 3817",
+    },
+  ];
+
   const [columns] = useState([
     {
       key: 1,

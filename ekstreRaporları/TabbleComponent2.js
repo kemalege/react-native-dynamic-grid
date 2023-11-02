@@ -1,30 +1,66 @@
 /* eslint-disable */
 
-import { FlatList, StyleSheet, View , Text, ScrollView} from 'react-native';
-import {useState, useRef, useEffect, useMemo} from 'react';
+import { FlatList, StyleSheet, View , Text, ScrollView, ActivityIndicator, Pressable} from 'react-native';
+import {useState, useRef, useEffect, useMemo, useCallback} from 'react';
 import { fetchData } from './fetchDataQuery';
+import PaginationPanel from './ui/PaginationPanel';
 
 const TableOne = () => {
+
+    const token = process.env.TOKEN;
+    const userToken = process.env.USER_TOKEN;
+    const url = process.env.API_URL;
+  
 
     const refFlatList1 = useRef(null);
     const refFlatList2 = useRef(null);
     const [scrollingRightSideAmount, setScrollingRightSideAmount] = useState(0);
+    const [selectedRow, setSelectedRow] = useState(0);
+    const [loading, setLoading] = useState(false)
+
+    const [pageCount, setPageCount] = useState(0);
+    const [recordCount, setRecordCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState('20');
+    const [rowsPerPages, setRowsPerPages] = useState([
+      {label: '10', value: '10'},
+      {label: '20', value: '20'},
+      {label: '30', value: '30'},
+      {label: '40', value: '40'},
+    ]); 
+
+    const onPageChange = (direction) => {
+      setCurrentPage(currPage => {
+        if ((currPage > 1 && direction < 0) || (currPage < pageCount && direction > 0)) {
+          return currPage + direction;
+        }
+        return currPage;
+      });
+     }
+
+     const handleRowPress = useCallback((index) => {
+      setSelectedRow(index);
+    }, []);
+     
+    const onPageEnd = (direction) => {
+      setCurrentPage(pageCount)
+    }
+    const onPageStart = (direction) => {
+      setCurrentPage(1)
+    }
+
+    // const onPageSizeChange = (rowsPerPage) => {
+    //   setPageSize(rowsPerPage)
+    // }
+    
+    // const paginationProps = {
+    //   pageSize,
+    //   setPageSize,
+    //   rowsPerPages,
+    //   setRowsPerPages
+    // };
 
     const [rowData, setRowData] = useState([])
-    const [pinnedRowData, setPinnedRowData] = useState([{
-      "CariKod": "120 34 359",
-      "CariIsim": "MUSTERI 3817",
-      "CariIl": "ISTANBUL",
-      "PlasiyerKodu": "28",
-      "Tarih": "2022-01-01T00:00:00",
-      "FisNo": null,
-      "Aciklama": "ACIKLAMA SATIRI",
-      "VadeTarihi": "2022-01-01T00:00:00",
-      "BorcTutar": 369.60000000,
-      "AlacakTutar": 0.00000000,
-      "BorcBakiye": 369.60000000,
-      "AlacakBakiye": 0.00000000
-  }])
 
     const [columns, setColumns] = useState([]);
     const [pinnedColumns, setPinnedColumns] = useState([
@@ -53,28 +89,32 @@ const TableOne = () => {
         return columns;
       }
 
-    const postFormData = useMemo(() => {
+      const createPostFormData = useCallback(( currentPage, PageSize) => {
         const formData = new FormData();
-        formData.append('PageNumber', 1);
-        formData.append('PageSize', 30);
-        formData.append('Token', process.env.TOKEN);
-        formData.append('user_token', process.env.USER_TOKEN);
+        formData.append('PageNumber', currentPage);
+        formData.append('PageSize', PageSize);
+        formData.append('Token', token);
+        formData.append('user_token', userToken);
         return formData;
       }, []);
     
-      const fetchExtractOfCustomer = async () => {
+      const fetchExtractOfCustomer = async (currentPage, PageSize) => {
         try {
-          const url = process.env.API_URL;
-          const data = await fetchData(url, postFormData);
+          setLoading(true)
+          const params = createPostFormData(currentPage, PageSize)
+          const data = await fetchData(url, params);
           setRowData(data[0])
+          setRecordCount(data[1][0].RecordCount)
+          setPageCount(data[1][0].PageCount)
           const columns = createHeadersFromObject(data[0][0]);
-        //   console.log(columns)
+          // console.log(columns)
           setColumns(columns)
           // console.log('Veri alındı:', data[0]);
     
         } catch (error) {
           console.error('Hata:', error);
         }
+        setLoading(false)
       };
 
       function isNumber(value) {
@@ -88,12 +128,18 @@ const TableOne = () => {
       }
 
     useEffect(() => {
-        fetchExtractOfCustomer();
-    }, []);
+        fetchExtractOfCustomer(currentPage, pageSize);
+    }, [currentPage, pageSize]);
 
     const renderItem = ({ item, index }) => {
         return (
-            <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row'}}>
+              <Pressable
+                onPress={() => handleRowPress(index)}
+                style={({ pressed }) => [
+                  styles.pressableRow,
+                  { backgroundColor: pressed ? '#F5F5F5' : (index === selectedRow ? '#E3EEFA' : 'white') },
+                ]}>
                 {columns.map((col, index) => {      
                     return <View style={styles.rowCell} key={col.key}>
                         <Text style={[styles.rowText, isNumber(item[col.name]) ? {textAlign: 'right'} : {textAlign: 'center'}]}>
@@ -101,38 +147,37 @@ const TableOne = () => {
                         </Text>
                     </View>
                 })}
+                </Pressable>
             </View>
         );
       };
-
-      const renderPinnedItem = ({ item, index }) => {
+      
+      const renderPinnedItem = ({ item, rowIndex }) => {
         return (
             <View style={{ flexDirection: 'col' }}>
+              <Pressable
+              onPress={()=> setSelectedRow(rowIndex)}
+              style={({pressed}) => [
+                {
+                  backgroundColor: pressed ? '#f2f0f5' : 'white',
+                },
+                styles.pressableRow,
+              ]}>
                 {pinnedColumns.map((col, index) => {      
-                    return <View style={styles.rowCell} key={col.key}>
+                    return <View style={[styles.rowCell, rowIndex==selectedRow ? styles.selectedRow : '']} key={col.key}>
                         <Text style={[styles.rowText, isNumber(item[col.name]) ? {textAlign: 'right'} : {textAlign: 'center'}]}>
                             {item[col.name]}
                         </Text>
                     </View>
                 })}
+                </Pressable>
             </View>
         );
       };
 
-    const item = ({ item }) => (
-        <View style={{ flexDirection: 'row' }}>
-           
-            <View style={{ width: 400, backgroundColor: 'lightpink'}}>
-                <Text style={{ fontSize: 16, fontWeight: 'bold' , textAlign: 'center'}}>{item.name}</Text>
-            </View>
-            <View style={{ width: 400, backgroundColor: 'lavender'}}>
-                <Text style={{ fontSize: 16, fontWeight: 'bold' , textAlign: 'center'}}>{item.email}</Text>
-            </View>
-        </View>
-    )
     return (
-        <View style={{ flexDirection: 'row' }}>
-           <ScrollView  horizontal={true} >
+        <View style={{ flexDirection: 'col' }}>
+           {/* <ScrollView  horizontal={true} >
                 <View style={{ flexDirection: 'col' }} >
                     <View style={{ flexDirection: 'row' }}>
                     {pinnedColumns.map((col,index) => (
@@ -152,8 +197,16 @@ const TableOne = () => {
                     // }}
                     />
                 </View>
-            </ScrollView>
-            <ScrollView  horizontal={true} >
+            </ScrollView> */}
+              <View style={{ flexDirection: 'row' }}>
+                    <View style={styles.paginationContainer} >
+                        <PaginationPanel 
+                        pageSize={pageSize} setPageSize={setPageSize} rowsPerPages={rowsPerPages} setRowsPerPage={setRowsPerPages} onPageChange={onPageChange}
+                        pageCount={pageCount} recordCount={recordCount} currentPage={currentPage} setCurrentPage={setCurrentPage} loading={loading} />
+                    </View>
+              </View>
+              {loading ? <ActivityIndicator style={styles.loadingOverlay} size="large" color="gray"/> : 
+              <ScrollView  horizontal={true} > 
                 <View style={{ flexDirection: 'col' }} >
                     <View style={{ flexDirection: 'row' }}>
                     {columns.map((col,index) => (
@@ -173,7 +226,7 @@ const TableOne = () => {
                     // }}
                     />
                 </View>
-            </ScrollView>
+            </ScrollView>}
         </View>
     )
 }
@@ -203,29 +256,43 @@ const styles = StyleSheet.create({
 
     },
     columnText: { 
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold' , 
         textAlign: 'center',
         color: '#212121',
         
     },
-    pagination: {
-      display: 'flex',
-      backgroundColor: '#F5FCFF',
-    },
     rowCell: { 
         width: 200,
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 10,
+        backgroundColor: 'transparent',
+        padding: 10,
         borderBottomWidth: 1,
         borderColor: '#E0E0E0',
         
     },
     rowText: {
+      fontSize: 14,
       fontWeight: '400',
-      fontSize: 16,
       textAlign: 'center',
       color: '#212121',
     },
+    paginationContainer: {
+      flex: 1,
+      backgroundColor: '#FFFFFF',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderColor: '#E0E0E0',
+      zIndex: 2,
+    },
+    loadingOverlay: {   
+      height: 280,
+      backgroundColor: 'white',
+    },
+    pressableRow: {   
+      flexDirection: 'row',
+    },
+    selectedRowStyle: {
+      backgroundColor: '#E3EEFA'
+    }
 });
   
