@@ -6,11 +6,12 @@ import IconButton from './IconButton';
 import {MaterialIcon} from './Icon';
 import {Text} from './Text';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { ACTION } from '../TabbleComponent2';
 
-const PaginationPanel = ({pageSize, setPageSize, rowsPerPages, setRowsPerPages, onPageChange, pageCount, recordCount, currentPage, setCurrentPage, loading}) => {
+const PaginationPanel = ({state, rowsPerPages, setRowsPerPages, onPageChange, dispatch}) => {
 
   // const { pageSize, rowsPerPages, setPageSize, setRowsPerPages } = paginationProps;
-
+    const {loading, currentPage, pageSize, recordCount, pageCount} = state;
     const [open, setOpen] = useState(false);
     const [disabled, setDisabled] = useState(
       {
@@ -20,7 +21,6 @@ const PaginationPanel = ({pageSize, setPageSize, rowsPerPages, setRowsPerPages, 
         last: false 
       }
     );
-      
     const from = (currentPage-1) * pageSize + 1;
     const to = Math.min((currentPage) * pageSize, recordCount);
 
@@ -59,7 +59,7 @@ const PaginationPanel = ({pageSize, setPageSize, rowsPerPages, setRowsPerPages, 
             value={pageSize}
             items={rowsPerPages}
             setOpen={setOpen}
-            setValue={setPageSize}
+            setValue={()=> dispatch({type: ACTION.SET_PAGE_SIZE, payload: pageSize})}
             setItems={setRowsPerPages}
             />
       </View>
