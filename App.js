@@ -20,8 +20,7 @@ import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import {PaperProvider} from 'react-native-paper';
-import TableComponent2 from './ekstreRaporları/TabbleComponent2';
-import TableOne from './ekstreRaporları/TabbleComponent2';
+import TableOne from './dataGrid/TabbleComponent2';
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';

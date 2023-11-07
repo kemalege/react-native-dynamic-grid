@@ -2,17 +2,23 @@
 
 import React, { useEffect, useState } from 'react';
 import {View, TouchableOpacity, StyleSheet} from 'react-native';
-import IconButton from './IconButton';
-import {MaterialIcon} from './Icon';
-import {Text} from './Text';
-import DropDownPicker from 'react-native-dropdown-picker';
-import { ACTION } from '../TabbleComponent2';
+import IconButton from './ui/IconButton';
+import {MaterialIcon} from './ui/Icon';
+import {Text} from './ui/Text';
+// import {Picker} from '@react-native-picker/picker';
+import { Dropdown } from 'react-native-element-dropdown';
+import { ACTION } from './Actions';
 
-const PaginationPanel = ({state, rowsPerPages, setRowsPerPages, onPageChange, dispatch}) => {
+const PaginationPanel = ({state, onPageChange, setRowsPerPage, dispatch}) => {
+  
+  const {loading, currentPage, pageSize, recordCount, pageCount, rowsPerPage} = state;
 
-  // const { pageSize, rowsPerPages, setPageSize, setRowsPerPages } = paginationProps;
-    const {loading, currentPage, pageSize, recordCount, pageCount} = state;
-    const [open, setOpen] = useState(false);
+  const moveToFirstPage = () => dispatch({ type: ACTION.MOVE_TO_FIRST_PAGE });
+  const moveToLastPage = () => dispatch({ type: ACTION.MOVE_TO_LAST_PAGE, payload: pageCount});
+
+  const [value, setValue] = useState('20');
+    const [isFocus, setIsFocus] = useState(false);
+
     const [disabled, setDisabled] = useState(
       {
         first: false,
@@ -44,34 +50,37 @@ const PaginationPanel = ({state, rowsPerPages, setRowsPerPages, onPageChange, di
         <Text style={styles.pageCounterContainer}>Sayfa başına satır</Text>  
       </View>
       <View style={styles.dropdownBox}>
-        <DropDownPicker
-            style={{
-                backgroundColor: "white",
-            }}
-            textStyle={{
-                fontSize: 15
-            }}
-            selectedItemContainerStyle={{
-                backgroundColor: "#dfdfdf"
-              }}
-            showTickIcon={false}
-            open={open}
-            value={pageSize}
-            items={rowsPerPages}
-            setOpen={setOpen}
-            setValue={()=> dispatch({type: ACTION.SET_PAGE_SIZE, payload: pageSize})}
-            setItems={setRowsPerPages}
-            />
+      <Dropdown
+          style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
+          placeholderStyle={styles.placeholderStyle}
+          iconStyle={styles.iconStyle}
+          itemContainerStyle={styles.containerStyle}
+          containerStyle={styles.containerStyle}
+          mode="auto"
+          data={rowsPerPage}
+          maxHeight={300}
+          labelField="label"
+          valueField="value"
+          placeholder={!isFocus ? 'Sayfa Seç' : '...'}
+          searchPlaceholder="Filtrele..."
+          value={pageSize}
+          onFocus={() => setIsFocus(true)}
+          onBlur={() => setIsFocus(false)}
+          onChange={item => {
+            dispatch({type: ACTION.SET_PAGE_SIZE, payload: item.value});
+            setIsFocus(false);
+          }}
+        />
       </View>
       
       <View>
         <Text style={styles.pageCounterContainer}>{`${from} - ${to} of ${recordCount}`}</Text>  
       </View>
       <View style={styles.arrowButtonContainer}>
-        <IconButton onPress={()=>setCurrentPage(1)} icon="page-first" color="black" size="large" disabled={disabled.first} />
+        <IconButton onPress={moveToFirstPage} icon="page-first" color="black" size="large" disabled={disabled.first} />
         <IconButton onPress={()=>onPageChange(-1)} icon="chevron-left" color="black" size="large" disabled={disabled.previous}/>
         <IconButton onPress={()=>onPageChange(1)} icon="chevron-right" color="black" size="large" disabled={disabled.next}/>
-        <IconButton onPress={()=>setCurrentPage(pageCount)} icon="page-last" color="black" size="large" disabled={disabled.last}/>
+        <IconButton onPress={()=>moveToLastPage(pageCount)} icon="page-last" color="black" size="large" disabled={disabled.last}/>
       </View>
     </View>
   );
@@ -112,8 +121,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   dropdownBox: {
-    width: 80,
-  }
+    width: 65,
+  },
+  containerStyle: {
+    color: 'red',
+  },
+  dropdown: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 0.5,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
+  icon: {
+    marginRight: 5,
+  },
+  label: {
+    position: 'absolute',
+    backgroundColor: 'white',
+    left: 22,
+    top: 8,
+    zIndex: 999,
+    paddingHorizontal: 8,
+    fontSize: 14,
+  },
+  placeholderStyle: {
+    fontSize: 16,
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 16,
+  },
 });
 
 export default PaginationPanel;
