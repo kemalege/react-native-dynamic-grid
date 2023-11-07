@@ -116,6 +116,22 @@ const TableOne = () => {
       // styleDispatch({ type: 'selectRow', payload: index })
     }, []);
 
+    // const handleRowClicked = row => {
+    //   console.log(row)
+    //   const updatedData = state.rowData.map(item => {
+    //     if (row.id !== item.id) {
+    //       return item;
+    //     }
+  
+    //     return {
+    //       ...item,
+    //       toggleSelected: !item.toggleSelected
+    //     };
+    //   });
+  
+    //   dispatch({ type: ACTION.UPDATE_ROW, payload: {updatedData} })
+    // };
+
     // const [rowData, setRowData] = useState(null)
     // const [columns, setColumns] = useState([]);
 
@@ -157,7 +173,9 @@ const TableOne = () => {
     }, [state.currentPage, state.pageSize]);
     
     const renderItem = ({ item, index }) => {
-      return <MemoizedItem item={item} index={index} handleRowPress={handleRowPress} selectedRow={selectedRow} columns={state.columns} />;
+      let k = false
+      if(index == selectedRow) {k = true}
+      return <MemoizedItem item={item} index={index} handleRowPress={handleRowPress} k={k} columns={state.columns}/>;
     };
 
     return (

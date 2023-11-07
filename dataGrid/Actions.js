@@ -12,6 +12,7 @@ export const ACTION = {
     FETCH_START: 'fetchStart',
     FETCH_SUCCESS_ROW_DATA: 'fetchSuccessRowData',
     FETCH_SUCCESS_COLUMNS: 'fetchSuccessColumns',
-    FETCH_ERROR: 'fetchError'
+    FETCH_ERROR: 'fetchError',
+    UPDATE_ROW: 'updateRow'
 }
 

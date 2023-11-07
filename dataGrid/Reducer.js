@@ -30,6 +30,8 @@ export const reducer = (state, action) => {
         return { ...state, currentPage: action.payload };
       case ACTION.SET_ROWS_PER_PAGE:
         return { ...state, rowsPerPage: action.payload };
+      case ACTION.UPDATE_ROW:
+        return { ...state, rowData: action.payload };
       default:
         throw new Error();
     }

@@ -3,14 +3,15 @@ import React from 'react';
 import { StyleSheet, View , Text, Pressable} from 'react-native';
 import { formatCurrencyTL, isNumber, styledNumericRow } from './TabbleComponent2';
 
-export const MemoizedItem = React.memo(({ item, index, handleRowPress, selectedRow, columns }) => {
+export const MemoizedItem = React.memo(({ item, index, handleRowPress, k, columns }) => {
+  console.log(item)
     return (
       <View style={{ flexDirection: 'row'}}>
         <Pressable
           onPress={() => handleRowPress(index)}
           style={({ pressed }) => [
             styles.pressableRow,
-            { backgroundColor: pressed ? '#F5F5F5' : (index === selectedRow ? '#E3EEFA' : 'white') },
+            { backgroundColor: pressed ? '#F5F5F5' : (k? '#E3EEFA' : 'white') },
           ]}>
           {columns.map((col, index) => {
             // const value = item[col.name].value  
@@ -41,7 +42,7 @@ export const MemoizedItem = React.memo(({ item, index, handleRowPress, selectedR
     rowCell: { 
         width: 200,
         backgroundColor: 'transparent',
-        padding: 10,
+        
         borderBottomWidth: 1,
         borderColor: '#E0E0E0',     
     },
@@ -50,6 +51,16 @@ export const MemoizedItem = React.memo(({ item, index, handleRowPress, selectedR
       fontWeight: '400',
       textAlign: 'center',
       color: '#212121',
+      padding: 10,
+    },
+    selectedRowText: {
+      fontSize: 14,
+      fontWeight: '400',
+      textAlign: 'center',
+      color: '#212121',
+      padding: 10,
+      borderColor: 'blue',
+      borderWidth: 1,
     },
     pressableRow: {   
       flexDirection: 'row',
