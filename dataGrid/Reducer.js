@@ -32,6 +32,10 @@ export const reducer = (state, action) => {
         return { ...state, rowsPerPage: action.payload };
       case ACTION.UPDATE_ROW:
         return { ...state, rowData: action.payload };
+      case ACTION.SORT_BY:
+        return { ...state, sortBy: action.payload };
+      case ACTION.SET_SORT_DIRECTION:
+        return { ...state, sortDirection: action.payload };
       default:
         throw new Error();
     }

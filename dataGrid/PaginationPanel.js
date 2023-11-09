@@ -51,12 +51,14 @@ const PaginationPanel = ({state, onPageChange, setRowsPerPage, dispatch}) => {
       </View>
       <View style={styles.dropdownBox}>
       <Dropdown
-          style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
+          style={[styles.dropdown, isFocus && { borderColor: 'black' }]}
           placeholderStyle={styles.placeholderStyle}
           iconStyle={styles.iconStyle}
           itemContainerStyle={styles.containerStyle}
           containerStyle={styles.containerStyle}
           mode="auto"
+          itemTextStyle={{color: '#1C2025'}}
+          selectedTextStyle={{color: '#1C2025'}}
           data={rowsPerPage}
           maxHeight={300}
           labelField="label"
@@ -132,6 +134,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderRadius: 5,
     paddingHorizontal: 10,
+    
   },
   icon: {
     marginRight: 5,
@@ -147,13 +150,14 @@ const styles = StyleSheet.create({
   },
   placeholderStyle: {
     fontSize: 16,
+    color: 'black'
   },
   selectedTextStyle: {
     fontSize: 16,
   },
   iconStyle: {
     width: 20,
-    height: 20,
+    height: 20, 
   },
   inputSearchStyle: {
     height: 40,

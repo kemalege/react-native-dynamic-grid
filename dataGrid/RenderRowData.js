@@ -3,15 +3,15 @@ import React from 'react';
 import { StyleSheet, View , Text, Pressable} from 'react-native';
 import { formatCurrencyTL, isNumber, styledNumericRow } from './TabbleComponent2';
 
-export const MemoizedItem = React.memo(({ item, index, handleRowPress, k, columns }) => {
-  console.log(item)
+export const MemoizedItem = React.memo(({ item, index, handleRowPress, rowSelection, columns }) => {
+
     return (
       <View style={{ flexDirection: 'row'}}>
         <Pressable
           onPress={() => handleRowPress(index)}
           style={({ pressed }) => [
             styles.pressableRow,
-            { backgroundColor: pressed ? '#F5F5F5' : (k? '#E3EEFA' : 'white') },
+            { backgroundColor: pressed ? '#F5F5F5' : (rowSelection? '#E3EEFA' : 'white') },
           ]}>
           {columns.map((col, index) => {
             // const value = item[col.name].value  
@@ -42,7 +42,6 @@ export const MemoizedItem = React.memo(({ item, index, handleRowPress, k, column
     rowCell: { 
         width: 200,
         backgroundColor: 'transparent',
-        
         borderBottomWidth: 1,
         borderColor: '#E0E0E0',     
     },

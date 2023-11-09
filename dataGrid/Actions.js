@@ -13,6 +13,8 @@ export const ACTION = {
     FETCH_SUCCESS_ROW_DATA: 'fetchSuccessRowData',
     FETCH_SUCCESS_COLUMNS: 'fetchSuccessColumns',
     FETCH_ERROR: 'fetchError',
-    UPDATE_ROW: 'updateRow'
+    UPDATE_ROW: 'updateRow',
+    SORT_BY: 'sortBy',
+    SET_SORT_DIRECTION: 'setSortDirection',
 }
 

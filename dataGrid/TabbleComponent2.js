@@ -8,6 +8,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 import { ACTION } from './Actions';
 import { reducer } from './Reducer';
 import { MemoizedItem } from './RenderRowData';
+import IconButton from './ui/IconButton';
 
 
 // const styleReducer = (state, action) => {
@@ -72,6 +73,8 @@ const INITIAL_STATE = {
   rowData: "",
   columns: [],
   error: "",
+  sortBy: "",
+  sortDirection: "",
   rowsPerPage: [
     {label: '10', value: '10'},
     {label: '20', value: '20'},
@@ -110,11 +113,28 @@ const TableOne = () => {
       dispatch({ type: ACTION.UPDATE_CURRENT_PAGE, payload: direction });
     };
 
+    const onSortByColumn = (sortByCol) => {
+      const { sortDirection, currentPage, pageSize, sortBy } = state;
+      let newSortDirection = '';
+
+      if(sortByCol !== sortBy) newSortDirection = 'ASC';
+      else if (sortDirection === 'ASC') newSortDirection = 'DESC';
+      else if (sortDirection === 'DESC') {newSortDirection = ''; sortByCol = '';}
+      else newSortDirection = 'ASC';
+    
+      dispatch({ type: ACTION.SET_SORT_DIRECTION, payload: newSortDirection });
+      dispatch({ type: ACTION.SORT_BY, payload: sortByCol });
+    
+      fetchExtractOfCustomer(currentPage, pageSize, sortByCol, newSortDirection);
+
+    };
+    
+
      const handleRowPress = useCallback((index) => {
       // dispatch({ type: ACTION.SELECT_ROW, payload: index })
       setSelectedRow(index)
       // styleDispatch({ type: 'selectRow', payload: index })
-    }, []);
+    }, [selectedRow]);
 
     // const handleRowClicked = row => {
     //   console.log(row)
@@ -137,19 +157,21 @@ const TableOne = () => {
 
     const [selectedRow, setSelectedRow] = useState(null);
      
-      const createPostFormData = useCallback(( currentPage, PageSize) => {
+      const createPostFormData = useCallback(( currentPage, PageSize, sortBy, sortDirection ) => {
         const formData = new FormData();
         formData.append('PageNumber', currentPage);
         formData.append('PageSize', PageSize);
+        formData.append('sortBy', sortBy);
+        formData.append('sortDirection', sortDirection);
         formData.append('Token', token);
         formData.append('user_token', userToken);
         return formData;
       }, [token, userToken]);
     
-      const fetchExtractOfCustomer = async (currentPage, PageSize) => {
+      const fetchExtractOfCustomer = async (currentPage, PageSize, sortBy, sortDirection) => {
         try {
           dispatch({ type: ACTION.FETCH_START });
-          const params = createPostFormData(currentPage, PageSize)
+          const params = createPostFormData(currentPage, PageSize, sortBy, sortDirection)
           const data = await fetchData(url, params);
           // setRowData(data[0])
           dispatch({ type: ACTION.SET_RECORD_COUNT, payload: data[1][0].RecordCount });
@@ -169,17 +191,17 @@ const TableOne = () => {
       };
 
     useEffect(() => {
-        fetchExtractOfCustomer(state.currentPage, state.pageSize);
+        fetchExtractOfCustomer(state.currentPage, state.pageSize, state.sortBy, state.sortDirection);
     }, [state.currentPage, state.pageSize]);
     
     const renderItem = ({ item, index }) => {
-      let k = false
-      if(index == selectedRow) {k = true}
-      return <MemoizedItem item={item} index={index} handleRowPress={handleRowPress} k={k} columns={state.columns}/>;
+      let rowSelection = false
+      if(index == selectedRow) {rowSelection = true}
+      return <MemoizedItem item={item} index={index} handleRowPress={handleRowPress} rowSelection={rowSelection} columns={state.columns}/>;
     };
 
     return (
-        <View style={{ flexDirection: 'col' }}>
+        <View >
            {/* <ScrollView  horizontal={true} >
                 <View style={{ flexDirection: 'col' }} >
                     <View style={{ flexDirection: 'row' }}>
@@ -205,18 +227,24 @@ const TableOne = () => {
                     </View>
               </View>
               {state.loading ? <ActivityIndicator style={styles.loadingOverlay} size="large" color="gray"/> : 
-              <ScrollView  horizontal={true} > 
-                <View style={{ flexDirection: 'col' }} >
-                    <View style={{ flexDirection: 'row' }}>
-                    {state.columns.map((col,index) => (
-                        index == 0 ? 
-                          <View style={styles.columnHeader} key={col.key}>
-                            <Text style={styles.columnText}>{col.name}</Text>
-                          </View> :
-                          <View horizontal={true} style={styles.columnHeader} key={col.key}>
-                              <Text style={styles.columnText}>{col.name}</Text>
+              <ScrollView  horizontal={true}> 
+                <View >
+                    <View style={{ flexDirection: 'row'}}>
+                      {state.columns.map((col,index) => (
+                        <Pressable onPress={() => onSortByColumn(col.name)} key={col.key}>
+                          <View horizontal={true} style={styles.columnHeader} >
+                            <View >
+                                <Text style={styles.columnText}>{col.name}</Text>                             
+                            </View>
+                            <View style={styles.sortingButton}>
+                            {state.sortBy === col.name && (
+                              <IconButton onPress={() => onSortByColumn(col.name)} icon={state.sortDirection == 'ASC' ? 'arrow-up' : state.sortDirection == 'DESC' ? 'arrow-down' : 'cup-off'} color="#707070" size="medium"/>
+                              )}
+                            </View>
                           </View>
-                          ))}
+                          </Pressable>
+                       ))}
+                        
                     </View>
                     <FlatList ref={refFlatList2} data={state.rowData} renderItem={renderItem} keyExtractor={(item, index) => index.toString()} 
                     />
@@ -235,12 +263,21 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center'
     },
+    columnContainer: {
+      flexDirection: 'row',
+      minHeight: 40,
+    },
     columnHeader: { 
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
         width: 200,
         backgroundColor: '#FFFFFF',
-        paddingVertical: 10,
+        paddingVertical: 6,
         borderBottomWidth: 1,
         borderColor: '#E0E0E0',
+        minHeight: 44,
     },
     stickyColumnHeader: {
         width: 200,
@@ -256,6 +293,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#212121',
         
+    },
+    sortingButton: {
+        backgroundColor: 'transparent',
+        paddingHorizontal: 1
     },
     rowCell: { 
         width: 200,
