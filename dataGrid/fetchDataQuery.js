@@ -1,20 +1,17 @@
 /* eslint-disable */
+import axios from 'axios';
 
+export const api = axios.create({
+  baseURL: process.env.API_URL
+})
+export const fetchData = async ({currentPage = 1, pageSize = 20, sortBy="", sortDirection=""}) => {
 
+  const token = process.env.TOKEN;
+  const userToken = process.env.USER_TOKEN;
+  const credentials = {"Token": token, "user_token": userToken}
 
-export async function fetchData(url, formData) {
-
-  const options = {
-    method: 'POST',
-    body: formData
-  }
-
-  try {
-    const response = await fetch(url, options);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    // console.error(error);
-    return Promise.reject(error);
-  }
-}
+    const response = await api.post(`/extractOfCustomersPaging?PageNumber=${currentPage}&PageSize=${pageSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`, 
+    credentials);
+    return response.data;
+  
+};

@@ -9,9 +9,9 @@ import {Text} from './ui/Text';
 import { Dropdown } from 'react-native-element-dropdown';
 import { ACTION } from './Actions';
 
-const PaginationPanel = ({state, onPageChange, setRowsPerPage, dispatch}) => {
+const PaginationPanel = ({state, onPageChange, setRowsPerPage, dispatch, isLoading, isPreviousData}) => {
   
-  const {loading, currentPage, pageSize, recordCount, pageCount, rowsPerPage} = state;
+  const {currentPage, pageSize, recordCount, pageCount, rowsPerPage} = state;
 
   const moveToFirstPage = () => dispatch({ type: ACTION.MOVE_TO_FIRST_PAGE });
   const moveToLastPage = () => dispatch({ type: ACTION.MOVE_TO_LAST_PAGE, payload: pageCount});
@@ -19,30 +19,30 @@ const PaginationPanel = ({state, onPageChange, setRowsPerPage, dispatch}) => {
   const [value, setValue] = useState('20');
     const [isFocus, setIsFocus] = useState(false);
 
-    const [disabled, setDisabled] = useState(
-      {
-        first: false,
-        next: false,
-        previous: false,
-        last: false 
-      }
-    );
+    // const [disabled, setDisabled] = useState(
+    //   {
+    //     first: false,
+    //     next: false,
+    //     previous: false,
+    //     last: false 
+    //   }
+    // );
     const from = (currentPage-1) * pageSize + 1;
     const to = Math.min((currentPage) * pageSize, recordCount);
 
-    useEffect(() => {
-      if (loading) {
-        setDisabled({ first: true, previous: true, next: true, last: true });
-      } else {
-        if (currentPage === 1) {
-          setDisabled({ first: true, previous: true, next: false, last: false });
-        } else if (currentPage === pageCount) {
-          setDisabled({ first: false, previous: false, next: true, last: true });
-        } else {
-          setDisabled({ first: false, previous: false, next: false, last: false });
-        }
-      }
-     }, [currentPage, loading, pageCount]);
+    // useEffect(() => {
+    //   if (isLoading) {
+    //     setDisabled({ first: true, previous: true, next: true, last: true });
+    //   } else {
+    //     if (currentPage === 1) {
+    //       setDisabled({ first: true, previous: true, next: false, last: false });
+    //     } else if (currentPage === pageCount) {
+    //       setDisabled({ first: false, previous: false, next: true, last: true });
+    //     } else {
+    //       setDisabled({ first: false, previous: false, next: false, last: false });
+    //     }
+    //   }
+    //  }, [currentPage, isLoading, pageCount]);
 
   return (
     <View style={styles.container}>
@@ -79,10 +79,10 @@ const PaginationPanel = ({state, onPageChange, setRowsPerPage, dispatch}) => {
         <Text style={styles.pageCounterContainer}>{`${from} - ${to} of ${recordCount}`}</Text>  
       </View>
       <View style={styles.arrowButtonContainer}>
-        <IconButton onPress={moveToFirstPage} icon="page-first" color="black" size="large" disabled={disabled.first} />
-        <IconButton onPress={()=>onPageChange(-1)} icon="chevron-left" color="black" size="large" disabled={disabled.previous}/>
-        <IconButton onPress={()=>onPageChange(1)} icon="chevron-right" color="black" size="large" disabled={disabled.next}/>
-        <IconButton onPress={()=>moveToLastPage(pageCount)} icon="page-last" color="black" size="large" disabled={disabled.last}/>
+        <IconButton onPress={moveToFirstPage} icon="page-first" color="black" size="large" disabled={isPreviousData || currentPage === 1 || isLoading} />
+        <IconButton onPress={()=>onPageChange(-1)} icon="chevron-left" color="black" size="large" disabled={isPreviousData || currentPage === 1 || isLoading}/>
+        <IconButton onPress={()=>onPageChange(1)} icon="chevron-right" color="black" size="large" disabled={isPreviousData || currentPage === pageCount || isLoading}/>
+        <IconButton onPress={()=>moveToLastPage(pageCount)} icon="page-last" color="black" size="large" disabled={isPreviousData || currentPage === pageCount || isLoading}/>
       </View>
     </View>
   );

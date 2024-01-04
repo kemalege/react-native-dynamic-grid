@@ -4,12 +4,11 @@ import { FlatList, StyleSheet, View , Text, ScrollView, ActivityIndicator, Press
 import {useState, useRef, useEffect, useMemo, useCallback, useReducer} from 'react';
 import { fetchData } from './fetchDataQuery';
 import PaginationPanel from './PaginationPanel';
-import { combineReducers } from '@reduxjs/toolkit';
 import { ACTION } from './Actions';
 import { reducer } from './Reducer';
 import { MemoizedItem } from './RenderRowData';
 import IconButton from './ui/IconButton';
-
+import { useQuery, useMutation, useQueryClient } from "react-query"
 
 // const styleReducer = (state, action) => {
 //   switch (action.type) {
@@ -84,31 +83,46 @@ const INITIAL_STATE = {
 }
 
 const TableOne = () => {
-
-  console.log('rendered')
-
-    const token = process.env.TOKEN;
-    const userToken = process.env.USER_TOKEN;
-    const url = process.env.API_URL;
     
+  const queryClient = useQueryClient()
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
-    // const [styleState, styleDispatch] = useReducer(styleReducer, {selectedRow: 0 })
+    const paginationQuery = {
+      isLoading,
+      isError,
+      error,
+      data: customers,
+      isFetching,
+      isStale,
+      isPreviousData
+      } = useQuery(['customers', state.currentPage],
+      () => fetchData({currentPage: state.currentPage, pageSize: state.pageSize, sortBy: state.sortBy, sortDirection: state.sortDirection},{
+        // keepPreviousData: true,
+        // cacheTime: 0.1 * 60 * 1000,
+        staleTime: 5 * 60 * 1000,
+
+    }),
+    {
+      onSuccess: (customers) => {
+        dispatch({ type: ACTION.SET_RECORD_COUNT, payload: customers[1][0].RecordCount });
+        dispatch({ type: ACTION.SET_PAGE_COUNT, payload: customers[1][0].PageCount });
+        const columns = createHeadersFromObject(customers[0][0]);
+        const rows = customers[0]
+        dispatch({ type: ACTION.FETCH_SUCCESS_ROW_DATA, payload: {rows, columns} });
+        
+      }
+    }
+    )
     const [rowsPerPage, setRowsPerPage] = useState();
     
     const refFlatList1 = useRef(null);
     const refFlatList2 = useRef(null);
-    // const [loading, setLoading] = useState(false)
-    // const [pageCount, setPageCount] = useState(0);
-    // const [recordCount, setRecordCount] = useState(0);
-    // const [currentPage, setCurrentPage] = useState(1);
-    // const [pageSize, setPageSize] = useState('20');
-    // const [rowsPerPages, setRowsPerPages] = useState([
-    //   {label: '10', value: '10'},
-    //   {label: '20', value: '20'},
-    //   {label: '30', value: '30'},
-    //   {label: '40', value: '40'},
-    // ]); 
-
+    
+    useEffect(() => {
+        console.log(paginationQuery.isStale)
+  
+    }, [paginationQuery.isStale])
+    
+    
     const onPageChange = (direction) => {
       dispatch({ type: ACTION.UPDATE_CURRENT_PAGE, payload: direction });
     };
@@ -125,10 +139,8 @@ const TableOne = () => {
       dispatch({ type: ACTION.SET_SORT_DIRECTION, payload: newSortDirection });
       dispatch({ type: ACTION.SORT_BY, payload: sortByCol });
     
-      fetchExtractOfCustomer(currentPage, pageSize, sortByCol, newSortDirection);
-
+      fetchData({currentPage: currentPage, pageSize: pageSize, sortBy: sortByCol, sortDirection: newSortDirection})
     };
-    
 
      const handleRowPress = useCallback((index) => {
       // dispatch({ type: ACTION.SELECT_ROW, payload: index })
@@ -136,63 +148,12 @@ const TableOne = () => {
       // styleDispatch({ type: 'selectRow', payload: index })
     }, [selectedRow]);
 
-    // const handleRowClicked = row => {
-    //   console.log(row)
-    //   const updatedData = state.rowData.map(item => {
-    //     if (row.id !== item.id) {
-    //       return item;
-    //     }
-  
-    //     return {
-    //       ...item,
-    //       toggleSelected: !item.toggleSelected
-    //     };
-    //   });
-  
-    //   dispatch({ type: ACTION.UPDATE_ROW, payload: {updatedData} })
-    // };
-
-    // const [rowData, setRowData] = useState(null)
-    // const [columns, setColumns] = useState([]);
 
     const [selectedRow, setSelectedRow] = useState(null);
-     
-      const createPostFormData = useCallback(( currentPage, PageSize, sortBy, sortDirection ) => {
-        const formData = new FormData();
-        formData.append('PageNumber', currentPage);
-        formData.append('PageSize', PageSize);
-        formData.append('sortBy', sortBy);
-        formData.append('sortDirection', sortDirection);
-        formData.append('Token', token);
-        formData.append('user_token', userToken);
-        return formData;
-      }, [token, userToken]);
-    
-      const fetchExtractOfCustomer = async (currentPage, PageSize, sortBy, sortDirection) => {
-        try {
-          dispatch({ type: ACTION.FETCH_START });
-          const params = createPostFormData(currentPage, PageSize, sortBy, sortDirection)
-          const data = await fetchData(url, params);
-          // setRowData(data[0])
-          dispatch({ type: ACTION.SET_RECORD_COUNT, payload: data[1][0].RecordCount });
-          dispatch({ type: ACTION.SET_PAGE_COUNT, payload: data[1][0].PageCount });  
 
-          const columns = createHeadersFromObject(data[0][0]);
-          // const rows = createRowsFromObject(data[0]);
-          const rows = data[0]
-          dispatch({ type: ACTION.FETCH_SUCCESS_ROW_DATA, payload: {rows, columns} });
-          // dispatch({ type: ACTION.FETCH_SUCCESS_COLUMNS, payload: columns });
-          // setColumns(columns)
-          // setRowData(rows)
-    
-        } catch (error) {
-          dispatch({ type: ACTION.FETCH_ERROR, payload: error.message });
-        }       
-      };
-
-    useEffect(() => {
-        fetchExtractOfCustomer(state.currentPage, state.pageSize, state.sortBy, state.sortDirection);
-    }, [state.currentPage, state.pageSize]);
+    // useEffect(() => {
+    //     fetchExtractOfCustomer(state.currentPage, state.pageSize, state.sortBy, state.sortDirection);
+    // }, [state.currentPage, state.pageSize]);
     
     const renderItem = ({ item, index }) => {
       let rowSelection = false
@@ -222,11 +183,11 @@ const TableOne = () => {
               <View style={{ flexDirection: 'row' }}>
                     <View style={styles.paginationContainer} >
                         <PaginationPanel 
-                        onPageChange={onPageChange} rowsPerPage={rowsPerPage} setRowsPerPage={setRowsPerPage}
+                        onPageChange={onPageChange} rowsPerPage={rowsPerPage} setRowsPerPage={setRowsPerPage} isLoading={isLoading} isPreviousData={isPreviousData}
                         dispatch={dispatch} state={state}/>
                     </View>
               </View>
-              {state.loading ? <ActivityIndicator style={styles.loadingOverlay} size="large" color="gray"/> : 
+              {isLoading ? <ActivityIndicator style={styles.loadingOverlay} size="large" color="gray"/> : 
               <ScrollView  horizontal={true}> 
                 <View >
                     <View style={{ flexDirection: 'row'}}>
@@ -246,7 +207,7 @@ const TableOne = () => {
                        ))}
                         
                     </View>
-                    <FlatList ref={refFlatList2} data={state.rowData} renderItem={renderItem} keyExtractor={(item, index) => index.toString()} 
+                    <FlatList ref={refFlatList2} data={customers[0]} renderItem={renderItem} keyExtractor={(item, index) => index.toString()} 
                     />
                 </View>
             </ScrollView>}
